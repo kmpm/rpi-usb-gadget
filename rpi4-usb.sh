@@ -163,7 +163,7 @@ if ! $(grep -q /root/usb.sh /etc/rc.local) ; then
     echo
     echo "Add line '/root/usb.sh' to /etc/rc.local'?"
     ! confirm && exit
-    sudo sed '/^exit 0/i /root/usb.sh' /etc/rc.local    
+    sudo sed -i '/^exit 0/i /root/usb.sh' /etc/rc.local    
 fi
 
 
