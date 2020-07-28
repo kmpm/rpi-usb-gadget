@@ -36,6 +36,22 @@ teeconfirm() {
 
 ##### Actual work #####
 
+cat << EOF
+This script will modify '/boot/config.txt', '/boot/cmdline.txt' and other files.
+Warning, It might brick your device!
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Continue with modifications?
+EOF
+! confirm && exit
+
 teeconfirm "dtoverlay=dwc2" "/boot/config.txt"
 
 if ! $(grep -q modules-load=dwc2 /boot/cmdline.txt) ; then
@@ -177,7 +193,11 @@ if ! $(grep -q $USBFILE /etc/rc.local) ; then
     sudo sed -i "/^exit 0/i $USBFILE" /etc/rc.local    
 fi
 
+cat << EOF
 
-echo "Done setting up as USB gadget"
-echo "You must reboot for changes to take effect"
-echo "You can reach the device on $BASE_IP.1 when connected by USB"
+Done setting up as USB gadget
+You must reboot for changes to take effect
+You can reach the device on $BASE_IP.1 when connected by USB
+
+EOF
+
