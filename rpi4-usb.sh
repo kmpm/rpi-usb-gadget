@@ -158,7 +158,13 @@ EOF
     sudo chmod 750 /root/usb.sh
     echo "Created /root/usb.sh"
 fi
-   
-teeconfirm "/root/usb.sh" "/etc/rc.local"
+
+if ! $(grep -q /root/usb.sh /etc/rc.local) ; then
+    echo
+    echo "Add line '/root/usb.sh' to /etc/rc.local'?"
+    ! confirm && exit
+    sudo sed '/^exit 0/i /root/usb.sh' /etc/rc.local    
+fi
+
 
 echo "Done setting up usb"
