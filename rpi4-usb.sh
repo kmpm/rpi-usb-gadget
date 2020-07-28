@@ -3,7 +3,12 @@
 # Based on:
 #     - https://www.hardill.me.uk/wordpress/2019/11/02/pi4-usb-c-gadget/
 #     - https://pastebin.com/VtAusEmf
- 	
+#     - https://gist.github.com/ianfinch/08288379b3575f360b64dee62a9f453f
+
+# Options for later
+USBFILE=/root/usb.sh
+
+# some usefull functions
 confirm() {
     # call with a prompt string or use a default
     read -r -p "${1:-Are you sure? [y/N]} " response
@@ -28,6 +33,7 @@ teeconfirm() {
     fi
 }
 
+##### Actual work #####
 
 teeconfirm "dtoverlay=dwc2" "/boot/config.txt"
 
@@ -73,7 +79,6 @@ EOF
     echo "Created /etc/network/interfaces.d/usb0"
 fi
 
-USBFILE=/root/usb.sh
 
 if sudo test ! -e "$USBFILE" ; then
     cat << 'EOF' | sudo tee $USBFILE
@@ -161,11 +166,11 @@ EOF
     echo "Created $USBFILE"
 fi
 
-if ! $(grep -q /root/usb.sh /etc/rc.local) ; then
+if ! $(grep -q $USBFILE /etc/rc.local) ; then
     echo
-    echo "Add line '/root/usb.sh' to /etc/rc.local'?"
+    echo "Add line '$USBFILE' to /etc/rc.local'?"
     ! confirm && exit
-    sudo sed -i '/^exit 0/i /root/usb.sh' /etc/rc.local    
+    sudo sed -i "/^exit 0/i $USBFILE" /etc/rc.local    
 fi
 
 
