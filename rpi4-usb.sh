@@ -73,8 +73,10 @@ EOF
     echo "Created /etc/network/interfaces.d/usb0"
 fi
 
-if sudo test ! -e "/root/usb.sh" ; then
-    cat << EOF | sudo tee /root/usb.sh
+USBFILE=/root/usb.sh
+
+if sudo test ! -e "$USBFILE" ; then
+    cat << 'EOF' | sudo tee $USBFILE
 #!/bin/bash
 
 gadget=/sys/kernel/config/usb_gadget/pi4
@@ -155,8 +157,8 @@ ifup usb0
 service dnsmasq restart
 EOF
 
-    sudo chmod 750 /root/usb.sh
-    echo "Created /root/usb.sh"
+    sudo chmod 750 $USBFILE
+    echo "Created $USBFILE"
 fi
 
 if ! $(grep -q /root/usb.sh /etc/rc.local) ; then
