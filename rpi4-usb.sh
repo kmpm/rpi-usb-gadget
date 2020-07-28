@@ -7,6 +7,7 @@
 
 # Options for later
 USBFILE=/root/usb.sh
+BASE_IP=10.55.0
 
 # some usefull functions
 confirm() {
@@ -50,7 +51,7 @@ teeconfirm "libcomposite" "/etc/modules"
 
 teeconfirm "denyinterfaces usb0" "/etc/dhcpcd.conf"
 
-
+# install dnsmasq
 if [[ ! -e /usr/sbin/dnsmasq ]] ; then
     echo
     echo "Install dnsmasq"
@@ -58,30 +59,32 @@ if [[ ! -e /usr/sbin/dnsmasq ]] ; then
     sudo apt install dnsmasq
 fi
 
+# configure dnsmasq for usb0
 if [[ ! -e /etc/dnsmasq.d/usb ]] ; then
-	cat << EOF | sudo tee /etc/dnsmasq.d/usb
+	cat << EOF | sudo tee /etc/dnsmasq.d/usb > /dev/null
 interface=usb0
-dhcp-range=10.55.0.2,10.55.0.6,255.255.255.248,1h
+dhcp-range=$BASE_IP.2,$BASE_IP.6,255.255.255.248,1h
 dhcp-option=3
 leasefile-ro
 EOF
-    echo "Created /dnsmasq.d/usb"
+    echo "Created /etc/dnsmasq.d/usb"
 fi
 
+# configure static ip for interface usb0
 if [[ ! -e /etc/network/interfaces.d/usb0 ]] ; then
-    cat << EOF | sudo tee /etc/network/interfaces.d/usb0
+    cat << EOF | sudo tee /etc/network/interfaces.d/usb0 > /dev/null
 auto usb0
 allow-hotplug usb0
 iface usb0 inet static
-  address 10.55.0.1
+  address $BASE_IP.1
   netmask 255.255.255.248
 EOF
     echo "Created /etc/network/interfaces.d/usb0"
 fi
 
-
+# create script, $USBFILE, for usb gadget device in 
 if sudo test ! -e "$USBFILE" ; then
-    cat << 'EOF' | sudo tee $USBFILE
+    cat << 'EOF' | sudo tee $USBFILE > /dev/null
 #!/bin/bash
 
 gadget=/sys/kernel/config/usb_gadget/pi4
@@ -166,6 +169,7 @@ EOF
     echo "Created $USBFILE"
 fi
 
+# make sure $USBFILE runs on every boot
 if ! $(grep -q $USBFILE /etc/rc.local) ; then
     echo
     echo "Add line '$USBFILE' to /etc/rc.local'?"
@@ -174,4 +178,6 @@ if ! $(grep -q $USBFILE /etc/rc.local) ; then
 fi
 
 
-echo "Done setting up usb"
+echo "Done setting up as USB gadget"
+echo "You must reboot for changes to take effect"
+echo "You can reach the device on $BASE_IP.1 when connected by USB"
