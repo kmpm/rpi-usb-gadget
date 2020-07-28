@@ -3,51 +3,78 @@
 # Based on:
 #     - https://www.hardill.me.uk/wordpress/2019/11/02/pi4-usb-c-gadget/
 #     - https://pastebin.com/VtAusEmf
+ 	
+confirm() {
+    # call with a prompt string or use a default
+    read -r -p "${1:-Are you sure? [y/N]} " response
+    case "$response" in
+        [yY][eE][sS]|[yY]) 
+            true
+            ;;
+        *)
+            false
+            ;;
+    esac
+}
 
-if ! $(grep -q dtoverlay=dwc2 /boot/config.txt) ; then
-    echo "Add the line dtoverlay=dwc2 to /boot/config.txt"
-    exit
-fi
+teeconfirm() {
+    line=$1
+    f=$2
+    if ! $(grep -q "$line" $f); then
+        echo
+        echo "Add the line '$line' to '$f'"
+        ! confirm && exit
+        echo "$line" | sudo tee -a $f
+    fi
+}
+
+
+teeconfirm "dtoverlay=dwc2" "/boot/config.txt"
 
 if ! $(grep -q modules-load=dwc2 /boot/cmdline.txt) ; then
+    echo
     echo "Add the line modules-load=dwc2 to /boot/cmdline.txt"
-    exit
+    if ! confirm ; then
+        exit
+    fi
+    sudo sed -i '${s/$/ modules-load=dwc2/}' /boot/cmdline.txt
 fi
 
-if ! $(grep -q libcomposite /etc/modules) ; then
-    echo "Add the line libcomposite to /etc/modules"
-    exit
-fi
+teeconfirm "libcomposite" "/etc/modules"
 
-if ! $(grep -q "denyinterfaces usb0" /etc/dhcpcd.conf) ; then
-    echo "Add the line denyinterfaces usb0 to /etc/dhcpcd.conf"
-    exit
-fi
+teeconfirm "denyinterfaces usb0" "/etc/dhcpcd.conf"
+
 
 if [[ ! -e /usr/sbin/dnsmasq ]] ; then
+    echo
     echo "Install dnsmasq"
-    exit
+    ! confirm && exit
+    sudo apt install dnsmasq
 fi
 
 if [[ ! -e /etc/dnsmasq.d/usb ]] ; then
-    echo "interface=usb0" > /etc/dnsmasq.d/usb
-    echo "dhcp-range=10.55.0.2,10.55.0.6,255.255.255.248,1h" >> /etc/dnsmasq.d/usb
-    echo "dhcp-option=3" >> /etc/dnsmasq.d/usb
-    echo "leasefile-ro" >> /etc/dnsmasq.d/usb
+	cat << EOF | sudo tee /etc/dnsmasq.d/usb
+interface=usb0
+dhcp-range=10.55.0.2,10.55.0.6,255.255.255.248,1h
+dhcp-option=3
+leasefile-ro
+EOF
     echo "Created /dnsmasq.d/usb"
 fi
 
 if [[ ! -e /etc/network/interfaces.d/usb0 ]] ; then
-    echo "auto usb0" > /etc/network/interfaces.d/usb0
-    echo "allow-hotplug usb0" >> /etc/network/interfaces.d/usb0
-    echo "iface usb0 inet static" >> /etc/network/interfaces.d/usb0
-    echo "  address 10.55.0.1" >> /etc/network/interfaces.d/usb0
-    echo "  netmask 255.255.255.248" >> /etc/network/interfaces.d/usb0
+    cat << EOF | sudo tee /etc/network/interfaces.d/usb0
+auto usb0
+allow-hotplug usb0
+iface usb0 inet static
+  address 10.55.0.1
+  netmask 255.255.255.248
+EOF
     echo "Created /etc/network/interfaces.d/usb0"
 fi
 
-if [[ ! -e /root/usb.sh ]] ; then
-    cat << 'USBSETUP' > /root/usb.sh
+if sudo test ! -e "/root/usb.sh" ; then
+    cat << EOF | sudo tee /root/usb.sh
 #!/bin/bash
 
 gadget=/sys/kernel/config/usb_gadget/pi4
@@ -126,11 +153,12 @@ ls /sys/class/udc > ${gadget}/UDC
 udevadm settle -t 5 || :
 ifup usb0
 service dnsmasq restart
-USBSETUP
-    chmod 750 /root/usb.sh
+EOF
+
+    sudo chmod 750 /root/usb.sh
     echo "Created /root/usb.sh"
 fi
+   
+teeconfirm "/root/usb.sh" "/etc/rc.local"
 
-if ! $(grep -q /root/usb.sh /etc/rc.local) ; then
-    echo "Add the command /root/usb.sh to /etc/rc.local"
-fi
+echo "Done setting up usb"
