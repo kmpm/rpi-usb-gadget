@@ -79,8 +79,8 @@ fi
 if [[ ! -e /etc/dnsmasq.d/usb ]] ; then
 	cat << EOF | sudo tee /etc/dnsmasq.d/usb > /dev/null
 interface=usb0
-dhcp-range=$BASE_IP.2,$BASE_IP.6,255.255.255.248,1h
-dhcp-option=3
+dhcp-range=usb0,$BASE_IP.2,$BASE_IP.6,255.255.255.248,1h
+dhcp-option=usb0,3
 leasefile-ro
 EOF
     echo "Created /etc/dnsmasq.d/usb"
