@@ -6,7 +6,8 @@
 #     - https://gist.github.com/ianfinch/08288379b3575f360b64dee62a9f453f
 
 # Options for later
-USBFILE=/root/usb.sh
+USBFILE=/usr/local/sbin/usb-gadget.sh
+UNITFILE=/lib/systemd/system/usb-gadget.service
 BASE_IP=10.55.0
 
 # some usefull functions
@@ -76,14 +77,18 @@ if [[ ! -e /usr/sbin/dnsmasq ]] ; then
 fi
 
 # configure dnsmasq for usb0
-if [[ ! -e /etc/dnsmasq.d/usb ]] ; then
-	cat << EOF | sudo tee /etc/dnsmasq.d/usb > /dev/null
+if [[ ! -e /etc/dnsmasq.d/usb-gadget ]] ; then
+	cat << EOF | sudo tee /etc/dnsmasq.d/usb-gadget > /dev/null
+dhcp-rapid-commit
+dhcp-authoritative
+no-ping
 interface=usb0
 dhcp-range=usb0,$BASE_IP.2,$BASE_IP.6,255.255.255.248,1h
+domain=usb.lan
 dhcp-option=usb0,3
 leasefile-ro
 EOF
-    echo "Created /etc/dnsmasq.d/usb"
+    echo "Created /etc/dnsmasq.d/usb-gadget"
 fi
 
 # configure static ip for interface usb0
@@ -185,12 +190,27 @@ EOF
     echo "Created $USBFILE"
 fi
 
-# make sure $USBFILE runs on every boot
-if ! $(grep -q $USBFILE /etc/rc.local) ; then
-    echo
-    echo "Add line '$USBFILE' to /etc/rc.local'?"
-    ! confirm && exit
-    sudo sed -i "/^exit 0/i $USBFILE" /etc/rc.local    
+# make sure $USBFILE runs on every boot using $UNITFILE
+if [[ ! -e $UNITFILE ]] ; then
+    cat << EOF | sudo tee $UNITFILE > /dev/null
+[Unit]
+Description=USB gadget initialization
+After=network-online.target
+Wants=network-online.target
+#After=systemd-modules-load.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=$USBFILE
+
+[Install]
+WantedBy=sysinit.target
+
+EOF
+    echo "created $UNITFILE"
+    sudo systemctl daemon-reload
+    sudo systemctl enable usb-gadget
 fi
 
 cat << EOF
