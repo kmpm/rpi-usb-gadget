@@ -103,13 +103,13 @@ EOF
     echo "Created /etc/network/interfaces.d/usb0"
 fi
 
-# create script, $USBFILE, for usb gadget device in 
-if sudo test ! -e "$USBFILE" ; then
-    cat << 'EOF' | sudo tee $USBFILE > /dev/null
-#!/bin/bash
-
-gadget=/sys/kernel/config/usb_gadget/pi4
-
+if [[ ! -e /etc/usb-gadgets ]]; then 
+    sudo mkdir -p /etc/usb-gadgets
+fi
+if [[ ! -e /etc/usb-gadgets/net-msft ]]; then
+    cat << 'EOF' | sudo tee /etc/usb-gadgets/net-msft > /dev/null
+config1="RNDIS"
+config2="CDC"
 usb_version="0x0200" # USB 2.0
 device_class="0xEF"
 device_subclass="0x02"
@@ -117,31 +117,66 @@ bcd_device="0x0100" # v1.0.0
 device_protocol="0x01"
 vendor_id="0x1d50"
 product_id="0x60c7"
-#vendor_id="0x1d6b" # Linux Foundation
-#product_id="0x0104" # Multifunction composite gadget
 manufacturer="Ian"
 product="RPi4 USB Gadget"
 serial="fedcba9876543211"
 attr="0x80" # Bus powered
 power="250"
-config1="RNDIS"
-config2="CDC"
 ms_vendor_code="0xcd" # Microsoft
 ms_qw_sign="MSFT100" # also Microsoft (if you couldn't tell)
 ms_compat_id="RNDIS" # matches Windows RNDIS Drivers
 ms_subcompat_id="5162001" # matches Windows RNDIS 6.0 Driver
 mac="01:23:45:67:89:ab"
+
+EOF
+fi
+
+if [[ ! -e /etc/usb-gadgets/net-linux ]]; then
+    cat << 'EOF' | sudo tee /etc/usb-gadgets/net-linux > /dev/null
+config1="ECM"
+
+usb_version="0x0200" # USB 2.0
+vendor_id="0x1d6b" # Linux Foundation
+product_id="0x0104" # Multifunction composite gadget
+manufacturer="github.com/kmpm"
+product="RPi4 USB Gadget"
+serial="fedcba9876543210"
+attr="0x80" # Bus powered
+power="250"
+mac="01:23:45:67:89:ab"
+
+EOF
+
+fi
+
+
+# create script, $USBFILE, for usb gadget device in 
+if sudo test ! -e "$USBFILE" ; then
+    cat << 'EOF' | sudo tee $USBFILE > /dev/null
+#!/bin/bash
+
+gadget=/sys/kernel/config/usb_gadget/pi4
+
+if [[ ! -e "/etc/usb-gadgets/$1" ]]; then
+    echo "No such config, $1, found in /etc/usb-gadgets"
+    exit 1
+fi
+source /etc/usb-gadgets/$1
+
 dev_mac="02$(echo ${mac} | cut -b 3-)"
 host_mac="12$(echo ${mac} | cut -b 3-)"
 
 mkdir -p ${gadget}
-echo "${usb_version}" > ${gadget}/bcdUSB
-echo "${device_class}" > ${gadget}/bDeviceClass
-echo "${device_subclass}" > ${gadget}/bDeviceSubClass
 echo "${vendor_id}" > ${gadget}/idVendor
 echo "${product_id}" > ${gadget}/idProduct
 echo "${bcd_device}" > ${gadget}/bcdDevice
-echo "${device_protocol}" > ${gadget}/bDeviceProtocol
+echo "${usb_version}" > ${gadget}/bcdUSB
+
+if [ "${config1}" = "RNDIS" ] ; then
+    echo "${device_class}" > ${gadget}/bDeviceClass
+    echo "${device_subclass}" > ${gadget}/bDeviceSubClass
+    echo "${device_protocol}" > ${gadget}/bDeviceProtocol
+fi
 
 mkdir -p ${gadget}/strings/0x409
 echo "${manufacturer}" > ${gadget}/strings/0x409/manufacturer
@@ -154,30 +189,35 @@ echo "${power}" > ${gadget}/configs/c.1/MaxPower
 mkdir -p ${gadget}/configs/c.1/strings/0x409
 echo "${config1}" > ${gadget}/configs/c.1/strings/0x409/configuration
 
-mkdir -p ${gadget}/os_desc
-echo "1" > ${gadget}/os_desc/use
-echo "${ms_vendor_code}" > ${gadget}/os_desc/b_vendor_code
-echo "${ms_qw_sign}" > ${gadget}/os_desc/qw_sign
+if [ "${config1}" = "ECM" ] ; then
+    mkdir -p ${gadget}/functions/ecm.usb0
+    echo "${dev_mac}" > ${gadget}/functions/ecm.usb0/dev_addr
+    echo "${host_mac}" > ${gadget}/functions/ecm.usb0/host_addr
 
-mkdir -p ${gadget}/functions/rndis.usb0
-echo "${dev_mac}" > ${gadget}/functions/rndis.usb0/dev_addr
-echo "${host_mac}" > ${gadget}/functions/rndis.usb0/host_addr
-echo "${ms_compat_id}" > ${gadget}/functions/rndis.usb0/os_desc/interface.rndis/compatible_id
-echo "${ms_subcompat_id}" > ${gadget}/functions/rndis.usb0/os_desc/interface.rndis/sub_compatible_id
+    ln -s ${gadget}/functions/ecm.usb0 configs/c.1/
+    
+    mkdir -p functions/acm.usb0
+    ln -s functions/acm.usb0 configs/c.1/
+fi
 
-#mkdir ${gadget}/configs/c.2
-#echo "${attr}" > ${gadget}/configs/c.2/bmAttributes
-#echo "${power}" > ${gadget}/configs/c.2/MaxPower
-#mkdir -p ${gadget}/configs/c.2/strings/0x409
-#echo "${config2}" > ${gadget}/configs/c.2/strings/0x409/configuration
 
-#mkdir -p ${gadget}/functions/ecm.usb0
-#echo "${dev_mac}" > ${gadget}/functions/ecm.usb0/dev_addr
-#echo "${host_mac}" > ${gadget}/functions/ecm.usb0/host_addr
 
-ln -s ${gadget}/configs/c.1 ${gadget}/os_desc
-ln -s ${gadget}/functions/rndis.usb0 ${gadget}/configs/c.1
-#ln -s ${gadget}/functions/ecm.usb0 ${gadget}/configs/c.2
+if [ "${config1}" = "RNDIS" ] ; then
+    mkdir -p ${gadget}/os_desc
+    echo "1" > ${gadget}/os_desc/use
+    echo "${ms_vendor_code}" > ${gadget}/os_desc/b_vendor_code
+    echo "${ms_qw_sign}" > ${gadget}/os_desc/qw_sign
+
+    mkdir -p ${gadget}/functions/rndis.usb0
+    echo "${dev_mac}" > ${gadget}/functions/rndis.usb0/dev_addr
+    echo "${host_mac}" > ${gadget}/functions/rndis.usb0/host_addr
+    echo "${ms_compat_id}" > ${gadget}/functions/rndis.usb0/os_desc/interface.rndis/compatible_id
+    echo "${ms_subcompat_id}" > ${gadget}/functions/rndis.usb0/os_desc/interface.rndis/sub_compatible_id
+
+    ln -s ${gadget}/configs/c.1 ${gadget}/os_desc
+    ln -s ${gadget}/functions/rndis.usb0 ${gadget}/configs/c.1
+fi
+
 
 ls /sys/class/udc > ${gadget}/UDC
 
@@ -202,13 +242,13 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=$USBFILE
+ExecStart=$USBFILE net-msft
 
 [Install]
 WantedBy=sysinit.target
 
 EOF
-    echo "created $UNITFILE"
+    echo "Created $UNITFILE"
     sudo systemctl daemon-reload
     sudo systemctl enable usb-gadget
 fi
@@ -218,6 +258,11 @@ cat << EOF
 Done setting up as USB gadget
 You must reboot for changes to take effect
 You can reach the device on $BASE_IP.1 when connected by USB
+
+If you want to disable the usb0/gadget interface then
+please run
+`sudo systemctl disable usb-gadget`
+and reboot.
 
 EOF
 

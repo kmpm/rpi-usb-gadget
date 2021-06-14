@@ -6,6 +6,7 @@ on the shoulders of giants.
 - https://gist.github.com/ianfinch/08288379b3575f360b64dee62a9f453f
 - https://pastebin.com/VtAusEmf
 - https://www.hardill.me.uk/wordpress/2019/11/02/pi4-usb-c-gadget/
+- https://github.com/hardillb/rpi-gadget-image-creator/blob/master/usr/local/sbin/usb-gadget.sh-orig
 
 
 # Usage
