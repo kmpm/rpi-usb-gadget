@@ -127,23 +127,28 @@ ms_qw_sign="MSFT100" # also Microsoft (if you couldn't tell)
 ms_compat_id="RNDIS" # matches Windows RNDIS Drivers
 ms_subcompat_id="5162001" # matches Windows RNDIS 6.0 Driver
 mac="01:23:45:67:89:ab"
+dev_mac="02$(echo ${mac} | cut -b 3-)"
+host_mac="12$(echo ${mac} | cut -b 3-)"
 
 EOF
 fi
 
-if [[ ! -e /etc/usb-gadgets/net-linux ]]; then
-    cat << 'EOF' | sudo tee /etc/usb-gadgets/net-linux > /dev/null
+if [[ ! -e /etc/usb-gadgets/net-ecm ]]; then
+    cat << 'EOF' | sudo tee /etc/usb-gadgets/net-ecm > /dev/null
 config1="ECM"
 
 usb_version="0x0200" # USB 2.0
 vendor_id="0x1d6b" # Linux Foundation
 product_id="0x0104" # Multifunction composite gadget
+device_class="0xEF"
+device_subclass="0x02"
+device_protocol="0x01"
 manufacturer="github.com/kmpm"
 product="RPi4 USB Gadget"
-serial="fedcba9876543210"
-attr="0x80" # Bus powered
+serial="fedcba9876543211"
 power="250"
-mac="01:23:45:67:89:ab"
+host_mac="00:dc:c8:f7:75:14"
+dev_mac="00:dd:dc:eb:6d:a1"
 
 EOF
 
@@ -163,8 +168,7 @@ if [[ ! -e "/etc/usb-gadgets/$1" ]]; then
 fi
 source /etc/usb-gadgets/$1
 
-dev_mac="02$(echo ${mac} | cut -b 3-)"
-host_mac="12$(echo ${mac} | cut -b 3-)"
+
 
 mkdir -p ${gadget}
 echo "${vendor_id}" > ${gadget}/idVendor
@@ -172,7 +176,7 @@ echo "${product_id}" > ${gadget}/idProduct
 echo "${bcd_device}" > ${gadget}/bcdDevice
 echo "${usb_version}" > ${gadget}/bcdUSB
 
-if [ "${config1}" = "RNDIS" ] ; then
+if [ ! -z "${device_class}" ] ; then
     echo "${device_class}" > ${gadget}/bDeviceClass
     echo "${device_subclass}" > ${gadget}/bDeviceSubClass
     echo "${device_protocol}" > ${gadget}/bDeviceProtocol
@@ -183,11 +187,16 @@ echo "${manufacturer}" > ${gadget}/strings/0x409/manufacturer
 echo "${product}" > ${gadget}/strings/0x409/product
 echo "${serial}" > ${gadget}/strings/0x409/serialnumber
 
+
 mkdir ${gadget}/configs/c.1
-echo "${attr}" > ${gadget}/configs/c.1/bmAttributes
 echo "${power}" > ${gadget}/configs/c.1/MaxPower
+if [ ! -z "${attr} ]; then
+    echo "${attr}" > ${gadget}/configs/c.1/bmAttributes
+fi
+
 mkdir -p ${gadget}/configs/c.1/strings/0x409
 echo "${config1}" > ${gadget}/configs/c.1/strings/0x409/configuration
+
 
 if [ "${config1}" = "ECM" ] ; then
     mkdir -p ${gadget}/functions/ecm.usb0
@@ -199,7 +208,6 @@ if [ "${config1}" = "ECM" ] ; then
     mkdir -p functions/acm.usb0
     ln -s functions/acm.usb0 configs/c.1/
 fi
-
 
 
 if [ "${config1}" = "RNDIS" ] ; then
