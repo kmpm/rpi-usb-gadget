@@ -140,6 +140,7 @@ config1="ECM"
 usb_version="0x0200" # USB 2.0
 vendor_id="0x1d6b" # Linux Foundation
 product_id="0x0104" # Multifunction composite gadget
+bcd_device="0x0100" # v1.0.0
 device_class="0xEF"
 device_subclass="0x02"
 device_protocol="0x01"
@@ -190,7 +191,7 @@ echo "${serial}" > ${gadget}/strings/0x409/serialnumber
 
 mkdir ${gadget}/configs/c.1
 echo "${power}" > ${gadget}/configs/c.1/MaxPower
-if [ ! -z "${attr} ]; then
+if [ ! -z "${attr}" ]; then
     echo "${attr}" > ${gadget}/configs/c.1/bmAttributes
 fi
 
@@ -203,10 +204,10 @@ if [ "${config1}" = "ECM" ] ; then
     echo "${dev_mac}" > ${gadget}/functions/ecm.usb0/dev_addr
     echo "${host_mac}" > ${gadget}/functions/ecm.usb0/host_addr
 
-    ln -s ${gadget}/functions/ecm.usb0 configs/c.1/
+    ln -s ${gadget}/functions/ecm.usb0 ${gadget}/configs/c.1/
     
-    mkdir -p functions/acm.usb0
-    ln -s functions/acm.usb0 configs/c.1/
+    mkdir -p ${gadget}/functions/acm.usb0
+    ln -s functions/acm.usb0 ${gadget}/configs/c.1/
 fi
 
 
