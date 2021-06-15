@@ -69,7 +69,7 @@ teeconfirm "libcomposite" "/etc/modules"
 teeconfirm "denyinterfaces usb0" "/etc/dhcpcd.conf"
 
 # install dnsmasq
-if [[ ! -e /usr/sbin/dnsmasq ]] ; then
+if [[ ! -e /etc/dnsmasq.d ]] ; then
     echo
     echo "Install dnsmasq"
     ! confirm && exit
@@ -206,8 +206,8 @@ if [ "${config1}" = "ECM" ] ; then
 
     ln -s ${gadget}/functions/ecm.usb0 ${gadget}/configs/c.1/
     
-    mkdir -p ${gadget}/functions/acm.usb0
-    ln -s functions/acm.usb0 ${gadget}/configs/c.1/
+    #mkdir -p ${gadget}/functions/acm.usb0
+    #ln -s functions/acm.usb0 ${gadget}/configs/c.1/
 fi
 
 
