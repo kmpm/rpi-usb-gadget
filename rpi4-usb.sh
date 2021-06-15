@@ -106,8 +106,8 @@ fi
 if [[ ! -e /etc/usb-gadgets ]]; then 
     sudo mkdir -p /etc/usb-gadgets
 fi
-if [[ ! -e /etc/usb-gadgets/net-msft ]]; then
-    cat << 'EOF' | sudo tee /etc/usb-gadgets/net-msft > /dev/null
+if [[ ! -e /etc/usb-gadgets/net-rndis ]]; then
+    cat << 'EOF' | sudo tee /etc/usb-gadgets/net-rndis > /dev/null
 config1="RNDIS"
 config2="CDC"
 usb_version="0x0200" # USB 2.0
@@ -239,6 +239,25 @@ EOF
     echo "Created $USBFILE"
 fi
 
+
+prompt="Pick an option:"
+options=("RNDIS Network device type (best with windows)" "ECM Network device type")
+
+DEVICETYPE="net-rndis"
+
+echo -e "\n\nSelect network device type"
+PS3="$prompt "
+select opt in "${options[@]}" ; do 
+    case "$REPLY" in
+    1) DEVICETYPE="net-rndis";break;;
+    2) DEVICeTYPE="net-ecm";break;;
+    *) echo "Invalid option. Try another one.";continue;;
+    esac
+done
+echo -e "\nYou selected '$DEVICETYPE' which will be configured in"
+echo -e "the systemd unit file for usb-gadget.\n"
+
+
 # make sure $USBFILE runs on every boot using $UNITFILE
 if [[ ! -e $UNITFILE ]] ; then
     cat << EOF | sudo tee $UNITFILE > /dev/null
@@ -251,7 +270,7 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=$USBFILE net-msft
+ExecStart=$USBFILE $DEVICETYPE
 
 [Install]
 WantedBy=sysinit.target
@@ -264,13 +283,13 @@ fi
 
 cat << EOF
 
+
 Done setting up as USB gadget
 You must reboot for changes to take effect
 You can reach the device on $BASE_IP.1 when connected by USB
 
 If you want to disable the usb0/gadget interface then
-please run
-`sudo systemctl disable usb-gadget`
+please run 'sudo systemctl disable usb-gadget'
 and reboot.
 
 EOF

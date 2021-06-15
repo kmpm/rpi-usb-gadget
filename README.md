@@ -16,5 +16,8 @@ bash rpi4-usb.sh
 ```
 If you answer no to any of the questions the script will exit
 but should be safe to restart.
+You will be asked to choose between ECM or RNDIS type of network.
+RNDIS works better if your host is Windows and ECM might be better on Linux/Mac.
+
 If the script doesn't run successfully you might have a broken
 partial configuration.
