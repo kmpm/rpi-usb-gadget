@@ -37,29 +37,37 @@ EOF
 
 
 if [ -e "$UNITFILE" ]; then
+    echo "disabling and removing usb-gadget unit"
     sudo systemctl disable usb-gadget
+    # Removed /etc/systemd/system/sysinit.target.wants/usb-gadget.service.
     sudo rm "$UNITFILE"    
     sudo systemctl daemon-reload
 fi
 
 if [ -e /etc/usb-gadgets ]; then
+    echo "removing /etc/usb-gadgets"
     sudo rm -Rf /etc/usb-gadgets
 fi
 
 if [ -e "$USBFILE" ]; then
+    echo "removing $USBFILE"
     sudo rm "$USBFILE"
 fi
 
 if [ -e /etc/dnsmasq.d/usb-gadget ]; then
+    echo "removing dnsmasq config and uninstalling dnsmasq"
     sudo rm /etc/dnsmasq.d/usb-gadget
     sudo systemctl stop dnsmasq
     sudo apt purge dnsmasq
 fi
 
 if [ -e /etc/network/interfaces.d/usb0 ]; then
+    echo "removing interface config for usb0"
     sudo ifdown usb0
     sudo rm /etc/network/interfaces.d/usb0
 fi
+
+
 
 if $(grep -q modules-load=dwc2 /boot/cmdline.txt) ; then
     echo
