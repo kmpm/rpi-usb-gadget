@@ -250,7 +250,7 @@ PS3="$prompt "
 select opt in "${options[@]}" ; do 
     case "$REPLY" in
     1) DEVICETYPE="net-rndis";break;;
-    2) DEVICeTYPE="net-ecm";break;;
+    2) DEVICETYPE="net-ecm";break;;
     *) echo "Invalid option. Try another one.";continue;;
     esac
 done
