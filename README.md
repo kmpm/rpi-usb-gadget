@@ -9,7 +9,7 @@ on the shoulders of giants.
 - https://github.com/hardillb/rpi-gadget-image-creator/blob/master/usr/local/sbin/usb-gadget.sh-orig
 
 
-# Usage
+## Usage
 ```shell
 wget https://raw.githubusercontent.com/kmpm/rpi-usb-gadget/master/rpi4-usb.sh
 bash rpi4-usb.sh
@@ -21,3 +21,16 @@ RNDIS works better if your host is Windows and ECM might be better on Linux/Mac.
 
 If the script doesn't run successfully you might have a broken
 partial configuration.
+
+
+## Warning / License
+This script will modify '/boot/config.txt', '/boot/cmdline.txt' and other files.
+Warning, It might brick your device!
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
