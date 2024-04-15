@@ -2,7 +2,8 @@
 
 USBFILE=/usr/local/sbin/usb-gadget.sh
 UNITFILE=/lib/systemd/system/usb-gadget.service
-
+CONFIG_FILE=/boot/firmware/config.txt
+CMDLINE_FILE=/boot/firmware/cmdline.txt
 
 # some usefull functions
 confirm() {
@@ -17,9 +18,15 @@ confirm() {
             ;;
     esac
 }
+# check if $CONFIG_FILE exists or go back to old path
+if [[ ! -e $CONFIG_FILE ]]; then
+    CONFIG_FILE=/boot/config.txt
+    CMDLINE_FILE=/boot/cmdline.txt
+fi
+
 
 cat << EOF
-This script will modify '/boot/config.txt', '/boot/cmdline.txt' and other files.
+This script will modify '$CONFIG_FILE', '$CMDLINE_FILE' and other files.
 Warning, It might brick your device!
 Do not run unless you understand what it is doing.
 
@@ -34,6 +41,7 @@ SOFTWARE.
 Continue with modifications?
 EOF
 ! confirm && exit
+
 
 
 if [ -e "$UNITFILE" ]; then
@@ -69,15 +77,15 @@ fi
 
 
 
-if $(grep -q modules-load=dwc2 /boot/cmdline.txt) ; then
+if $(grep -q modules-load=dwc2 $CMDLINE_FILE) ; then
     echo
-    echo "remove line modules-load=dwc2 from /boot/cmdline.txt"
+    echo "remove line modules-load=dwc2 from $CMDLINE_FILE"
     if ! confirm ; then
         exit
     fi
-    cat /boot/cmdline.txt
-    sudo sed -i '${s/ modules-load=dwc2//}' /boot/cmdline.txt
-    cat /boot/cmdline.txt
+    cat $CMDLINE_FILE
+    sudo sed -i '${s/ modules-load=dwc2//}' $CMDLINE_FILE
+    cat $CMDLINE_FILE
 fi
 
 if $(grep -q 'denyinterfaces usb0' /etc/dhcpcd.conf) ; then

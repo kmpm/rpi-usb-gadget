@@ -35,8 +35,9 @@ __A:__ Haven't tried it yet and I haven't got any external reports this far.
 There is no real reason that it shouldn't though.
 
 
+
 ## Warning / License
-This script will modify '/boot/config.txt', '/boot/cmdline.txt' and other files.
+This script will modify '/boot/[firmware/]config.txt', '/boot/[firmware/]cmdline.txt' and other files.
 Warning, It might brick your device!
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
