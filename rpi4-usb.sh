@@ -185,6 +185,7 @@ EOF
         cat << EOF | sudo tee /etc/network/interfaces.d/usb0 > /dev/null
 auto usb0
 allow-hotplug usb0
+iface usb0 inet static
   address $BASE_IP.1
   netmask $NETMASK
 EOF
