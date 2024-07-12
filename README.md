@@ -11,7 +11,7 @@ on the shoulders of giants.
 
 ## Usage
 ```shell
-wget https://raw.githubusercontent.com/kmpm/rpi-usb-gadget/master/rpi4-usb.sh
+curl -O https://raw.githubusercontent.com/kmpm/rpi-usb-gadget/master/rpi4-usb.sh
 bash rpi4-usb.sh
 ```
 If you answer no to any of the questions the script will exit

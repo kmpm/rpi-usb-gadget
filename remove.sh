@@ -77,14 +77,14 @@ fi
 
 
 
-if $(grep -q modules-load=dwc2 $CMDLINE_FILE) ; then
+if $(grep -q modules-load=dwc2,g_ether $CMDLINE_FILE) ; then
     echo
-    echo "remove line modules-load=dwc2 from $CMDLINE_FILE"
+    echo "remove line modules-load=dwc2,g_ether from $CMDLINE_FILE"
     if ! confirm ; then
         exit
     fi
     cat $CMDLINE_FILE
-    sudo sed -i '${s/ modules-load=dwc2//}' $CMDLINE_FILE
+    sudo sed -i '${s/ modules-load=dwc2,g_ether//}' $CMDLINE_FILE
     cat $CMDLINE_FILE
 fi
 
